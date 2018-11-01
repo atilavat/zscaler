@@ -35,8 +35,6 @@ class client:
         self.obf_api_key = key
         self.timestamp = now
 
-        #print("Timestamp:", now, "\tKey", key)
-
     def login(self):
         self.obfuscateApiKey()
 
@@ -80,20 +78,13 @@ class client:
 
         urls_array = [list(row) for row in urls]
 
-        #print(urls)
         for array in urls_array:
-            #print(array)
 
-            #print(tuple)
 
             payload = array
             r = requests.post('https://' + self.base_url + "/urlLookup", data=json.dumps(payload), headers=headers)
-            #print(r.json())
 
             for item in r.json():
-                #print(item['url'], item['urlClassifications'], item['urlClassificationsWithSecurityAlert'])
-                #print(item)
-
                 url_categories.append(item)
 
         return(url_categories)
