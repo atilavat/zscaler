@@ -7,7 +7,7 @@ from itertools import islice
 
 
 class zclient:
-    version = '1.0'  # class variable shared by all instances
+    version = '0.1'  # class variable shared by all instances
     MAX_URLS_LOOKUP_PER_REQUEST = 100
     #URL_REGEX = re.compile("/^([\.]|https?:\/\/)?[a-z0-9-]+([\.:][a-z0-9-]+)+([\/\?].+|[\/])?$/i")
 
@@ -127,3 +127,6 @@ class zclient:
         return r.json()
 
 
+def main():
+    print("Installed")
+    pass
