@@ -109,16 +109,3 @@ class zclient:
                 line_count += 1
 
         return (self.urllookup(urls_list))
-
-
-session = zclient(cloud="zscloud.net", api_key="bmmT9wthzDP3", admin_user="api@tilavat.com",
-                  admin_password="Apin0m4dic!")
-session.login()
-
-results = session.urllookup_csv("categorise_tue19.csv")
-
-for item in results:
-    try:
-        print(item['url'], item['urlClassifications'][0], item['urlClassificationsWithSecurityAlert'])
-    except:
-        print(item['url'], item['urlClassifications'], item['urlClassificationsWithSecurityAlert'])
