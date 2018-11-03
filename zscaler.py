@@ -1,13 +1,13 @@
 import time
 import requests
 import json
+import csv
 from itertools import islice
 
 
-class client:
-    version = '1.0'         # class variable shared by all instances
+class zclient:
+    version = '1.0'  # class variable shared by all instances
     MAX_URLS_LOOKUP_PER_REQUEST = 100
-
 
     def __init__(self, cloud, api_key, admin_user, admin_password):
 
@@ -19,7 +19,6 @@ class client:
         self.obf_api_key = ''
         self.timestamp = ''
         self.JSESSIONID = ''
-
 
     def obfuscateApiKey(self):
         seed = self.api_key
@@ -34,6 +33,8 @@ class client:
 
         self.obf_api_key = key
         self.timestamp = now
+
+        # print("Timestamp:", now, "\tKey", key)
 
     def login(self):
         self.obfuscateApiKey()
@@ -50,22 +51,20 @@ class client:
             'timestamp': self.timestamp
         }
 
-
         try:
-            r = requests.post('http://'+ self.base_url + "/authenticatedSession", data=json.dumps(payload), headers = headers)
+            r = requests.post('http://' + self.base_url + "/authenticatedSession", data=json.dumps(payload),
+                              headers=headers)
 
         except Exception as e:
             print(e)
 
         self.JSESSIONID = r.cookies['JSESSIONID']
 
-
     def chunk(self, it, size):
         it = iter(it)
         return iter(lambda: tuple(islice(it, size)), ())
 
-
-    def urllookup(self, urls): #expects url in array
+    def urllookup(self, urls):  # expects url in array
         headers = {
             'content-type': "application/json",
             'cache-control': "no-cache",
@@ -78,13 +77,48 @@ class client:
 
         urls_array = [list(row) for row in urls]
 
+        # print(urls)
         for array in urls_array:
+            # print(array)
 
+            # print(tuple)
 
             payload = array
             r = requests.post('https://' + self.base_url + "/urlLookup", data=json.dumps(payload), headers=headers)
+            # print(r.json())
 
             for item in r.json():
+                # print(item['url'], item['urlClassifications'], item['urlClassificationsWithSecurityAlert'])
+                # print(item)
+
                 url_categories.append(item)
 
-        return(url_categories)
+        return (url_categories)
+
+    def urllookup_csv(self, csvfile):  # expect CSV file as input
+        urls_list = []
+        with open(csvfile) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+
+            for row in csv_reader:
+                if line_count == 0:
+                    pass  # ignore headers
+                else:
+                    urls_list.append(row[0])
+                line_count += 1
+
+        return (self.urllookup(urls_list))
+
+
+session = zclient(cloud="zscloud.net", api_key="bmmT9wthzDP3", admin_user="api@tilavat.com",
+                  admin_password="Apin0m4dic!")
+session.login()
+
+results = session.urllookup_csv("categorise_tue19.csv")
+
+for item in results:
+    try:
+        print(item['url'], item['urlClassifications'][0], item['urlClassificationsWithSecurityAlert'])
+    except:
+        print(item['url'], item['urlClassifications'], item['urlClassificationsWithSecurityAlert'])
