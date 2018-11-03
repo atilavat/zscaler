@@ -19,6 +19,8 @@ class zclient:
         self.obf_api_key = ''
         self.timestamp = ''
         self.JSESSIONID = ''
+        
+        self.login()
 
     def obfuscateApiKey(self):
         seed = self.api_key
