@@ -2,12 +2,14 @@ import time
 import requests
 import json
 import csv
+#import re
 from itertools import islice
 
 
 class zclient:
     version = '1.0'  # class variable shared by all instances
     MAX_URLS_LOOKUP_PER_REQUEST = 100
+    #URL_REGEX = re.compile("/^([\.]|https?:\/\/)?[a-z0-9-]+([\.:][a-z0-9-]+)+([\/\?].+|[\/])?$/i")
 
     def __init__(self, cloud, api_key, admin_user, admin_password):
 
@@ -21,6 +23,12 @@ class zclient:
         self.JSESSIONID = ''
         
         self.login()
+
+        self.headers = { #used across functions except during login
+            'content-type': "application/json",
+            'cache-control': "no-cache",
+            'cookie': "JSESSIONID=" + self.JSESSIONID
+        }
 
     def obfuscateApiKey(self):
         seed = self.api_key
@@ -79,19 +87,13 @@ class zclient:
 
         urls_array = [list(row) for row in urls]
 
-        # print(urls)
         for array in urls_array:
-            # print(array)
-
-            # print(tuple)
 
             payload = array
             r = requests.post('https://' + self.base_url + "/urlLookup", data=json.dumps(payload), headers=headers)
-            # print(r.json())
+
 
             for item in r.json():
-                # print(item['url'], item['urlClassifications'], item['urlClassificationsWithSecurityAlert'])
-                # print(item)
 
                 url_categories.append(item)
 
@@ -111,3 +113,17 @@ class zclient:
                 line_count += 1
 
         return (self.urllookup(urls_list))
+
+    def urlQuota(self):
+
+        r = requests.get('https://' + self.base_url + "/urlCategories/urlQuota", headers=self.headers)
+
+        return r.json()
+
+    def activate(self):
+
+        r = requests.post('https://' + self.base_url + "/status/activate", headers=self.headers)
+
+        return r.json()
+
+
