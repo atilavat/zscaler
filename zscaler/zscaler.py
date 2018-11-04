@@ -2,14 +2,14 @@ import time
 import requests
 import json
 import csv
-#import re
+import re
 from itertools import islice
+from urllib.parse import urlparse
 
 
 class zclient:
-    version = '0.1'  # class variable shared by all instances
     MAX_URLS_LOOKUP_PER_REQUEST = 100
-    #URL_REGEX = re.compile("/^([\.]|https?:\/\/)?[a-z0-9-]+([\.:][a-z0-9-]+)+([\/\?].+|[\/])?$/i")
+    URL_REGEX = re.compile("/^([\.]|https?:\/\/)?[a-z0-9-]+([\.:][a-z0-9-]+)+([\/\?].+|[\/])?$/i")
 
     def __init__(self, cloud, api_key, admin_user, admin_password):
 
@@ -74,6 +74,12 @@ class zclient:
         it = iter(it)
         return iter(lambda: tuple(islice(it, size)), ())
 
+    def url_format_check(self, url):
+
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+
+
     def urllookup(self, urls):  # expects url in array
         headers = {
             'content-type': "application/json",
@@ -90,8 +96,12 @@ class zclient:
         for array in urls_array:
 
             payload = array
-            r = requests.post('https://' + self.base_url + "/urlLookup", data=json.dumps(payload), headers=headers)
 
+            try:
+                r = requests.post('https://' + self.base_url + "/urlLookup", data=json.dumps(payload), headers=headers)
+
+            except Exception as e:
+                return (e.message, e.args)
 
             for item in r.json():
 
@@ -99,18 +109,21 @@ class zclient:
 
         return (url_categories)
 
-    def urllookup_csv(self, csvfile):  # expect CSV file as input
+    def read_url_csv(self, csvfile):  # expect CSV file as input
         urls_list = []
-        with open(csvfile) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
-            line_count = 0
+        try:
+            with open(csvfile) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                line_count = 0
 
-            for row in csv_reader:
-                if line_count == 0:
-                    pass  # ignore headers
-                else:
-                    urls_list.append(row[0])
-                line_count += 1
+                for row in csv_reader:
+                    if line_count == 0:
+                        pass  # ignore headers
+                    else:
+                        urls_list.append(row[0])
+                    line_count += 1
+        except Exception as e:
+            return(e.message, e.args)
 
         return (self.urllookup(urls_list))
 
@@ -127,6 +140,28 @@ class zclient:
         return r.json()
 
 
-def main():
-    print("Installed")
-    pass
+def zProxyCheck():
+
+    try:
+        r = requests.get('http://ip.zscaler.com')
+
+        if r.text.find("You are accessing this host via a Zscaler proxy") > 0:
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        return (e.message, e.args)
+
+def accessCheck(url): #returns true if allowed else false
+        try:
+            r = requests.get(url)
+
+            if r.status_code == 200: return True
+
+            else:
+                return False
+
+        except Exception as e:
+            print (e)
+            return False
