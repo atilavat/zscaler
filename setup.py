@@ -14,7 +14,7 @@ setup(
 
     name='zscaler',  # Required
 
-    version='0.12',  # Required
+    version='0.13',  # Required
 
     description='A python wrapper for Zscaler API. This project is not affiliated with Zscaler',  # Optional
 
