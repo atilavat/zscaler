@@ -2,14 +2,12 @@ import time
 import requests
 import json
 import csv
-import re
 from itertools import islice
 from urllib.parse import urlparse
 
 
 class zclient:
     MAX_URLS_LOOKUP_PER_REQUEST = 100
-    URL_REGEX = re.compile("/^([\.]|https?:\/\/)?[a-z0-9-]+([\.:][a-z0-9-]+)+([\/\?].+|[\/])?$/i")
 
     def __init__(self, cloud, api_key, admin_user, admin_password):
 
@@ -30,7 +28,7 @@ class zclient:
             'cookie': "JSESSIONID=" + self.JSESSIONID
         }
 
-    def obfuscateApiKey(self):
+    def obfuscate_api_key(self):
         seed = self.api_key
         now = int(time.time() * 1000)
         n = str(now)[-6:]
@@ -47,7 +45,7 @@ class zclient:
         # print("Timestamp:", now, "\tKey", key)
 
     def login(self):
-        self.obfuscateApiKey()
+        self.obfuscate_api_key()
 
         headers = {
             'content-type': "application/json",
@@ -80,7 +78,7 @@ class zclient:
         return all([result.scheme, result.netloc])
 
 
-    def urllookup(self, urls):  # expects url in array
+    def url_lookup(self, urls):  # expects url in array
         headers = {
             'content-type': "application/json",
             'cache-control': "no-cache",
@@ -101,7 +99,8 @@ class zclient:
                 r = requests.post('https://' + self.base_url + "/urlLookup", data=json.dumps(payload), headers=headers)
 
             except Exception as e:
-                return (e.message, e.args)
+                print(e.args)
+                exit(e.args[0])
 
             for item in r.json():
 
@@ -123,11 +122,13 @@ class zclient:
                         urls_list.append(row[0])
                     line_count += 1
         except Exception as e:
-            return(e.message, e.args)
+            print(e.args)
+            exit(e.args[0])
 
-        return (self.urllookup(urls_list))
+        return (urls_list)
 
-    def urlQuota(self):
+
+    def get_url_quota(self):
 
         r = requests.get('https://' + self.base_url + "/urlCategories/urlQuota", headers=self.headers)
 
@@ -140,7 +141,7 @@ class zclient:
         return r.json()
 
 
-def zProxyCheck():
+def proxy_check():
 
     try:
         r = requests.get('http://ip.zscaler.com')
@@ -153,7 +154,7 @@ def zProxyCheck():
     except Exception as e:
         return (e.message, e.args)
 
-def accessCheck(url): #returns true if allowed else false
+def access_check(url): #returns true if allowed else false
         try:
             r = requests.get(url)
 
@@ -165,3 +166,5 @@ def accessCheck(url): #returns true if allowed else false
         except Exception as e:
             print (e)
             return False
+
+
