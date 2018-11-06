@@ -1,2 +1,5 @@
 name = "zscaler"
-from .zscaler import zclient
+import zscaler
+#from .zscaler import zclient
+
+    
