@@ -12,6 +12,8 @@ The following features are currently supported:
 
 `URL Lookup in CSV`
 
+`Zscaler Proxy Check`
+
 
 **Support**
 
