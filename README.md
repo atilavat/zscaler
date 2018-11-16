@@ -24,3 +24,12 @@ Requirements
 
     Python 3.2 or later.
     Zscaler API key
+
+**Installation**
+
+`$ pip install -U zscaler`
+
+**Developer Documentation**
+
+View the reference documentation
+https://help.zscaler.com/zia/api
