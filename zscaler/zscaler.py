@@ -5,7 +5,6 @@ import csv
 from itertools import islice
 from urllib.parse import urlparse
 
-
 class zclient:
     MAX_URLS_LOOKUP_PER_REQUEST = 100
 
@@ -72,11 +71,6 @@ class zclient:
         it = iter(it)
         return iter(lambda: tuple(islice(it, size)), ())
 
-    def url_format_check(self, url):
-
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-
 
     def url_lookup(self, urls):  # expects url in array
         headers = {
@@ -140,6 +134,11 @@ class zclient:
 
         return r.json()
 
+    def get_vpn_endpoints(self):
+
+        r = requests.get('https://' + self.base_url + "/getvpnEndpoints", headers=self.headers)
+
+        return r.status_code
 
 def proxy_check():
 
@@ -166,5 +165,3 @@ def access_check(url): #returns true if allowed else false
         except Exception as e:
             print (e)
             return False
-
-
