@@ -3,7 +3,15 @@ import requests
 import json
 import csv
 from itertools import islice
-from urllib.parse import urlparse
+import ipaddress
+
+dc_list = None  # global variable to hold ips json
+
+
+def _chunk(it, size):
+    it = iter(it)
+    return iter(lambda: tuple(islice(it, size)), ())
+
 
 class zclient:
     MAX_URLS_LOOKUP_PER_REQUEST = 100
@@ -67,11 +75,6 @@ class zclient:
 
         self.JSESSIONID = r.cookies['JSESSIONID']
 
-    def chunk(self, it, size):
-        it = iter(it)
-        return iter(lambda: tuple(islice(it, size)), ())
-
-
     def url_lookup(self, urls):  # expects url in array
         headers = {
             'content-type': "application/json",
@@ -79,7 +82,7 @@ class zclient:
             'cookie': "JSESSIONID=" + self.JSESSIONID
         }
 
-        urls = list(self.chunk(urls, self.MAX_URLS_LOOKUP_PER_REQUEST))
+        urls = list(_chunk(urls, self.MAX_URLS_LOOKUP_PER_REQUEST))
 
         url_categories = []
 
@@ -134,11 +137,6 @@ class zclient:
 
         return r.json()
 
-    def get_vpn_endpoints(self):
-
-        r = requests.get('https://' + self.base_url + "/getvpnEndpoints", headers=self.headers)
-
-        return r.status_code
 
 def proxy_check():
 
@@ -165,3 +163,59 @@ def access_check(url): #returns true if allowed else false
         except Exception as e:
             print (e)
             return False
+
+
+def _get_ips_json(cloud):
+    # get list of DCs
+    global dc_list
+    dc_list = dict()
+    r = requests.get("https://ips." + cloud + "/cenr/jsonip")
+
+    for region in r.json()['Geo_regions']:
+        for location in r.json()['Geo_regions'][region]:
+            for item in r.json()['Geo_regions'][region][location]:
+                a = dict(item)
+                if 'NRU' not in a['notes'] and 'DNP' not in a['notes']:  # ignores DC which are not ready
+                    dc_list.update({location: a})
+
+
+def get_dc(cloud, egress_site):  # return 2 closest dc info as dictionary type
+    if dc_list is None:
+        _get_ips_json(cloud)
+
+    r = requests.get("https://nominatim.openstreetmap.org/search?q=" + egress_site + "&format=json")
+
+    vpn_endpoints = requests.get(
+        "https://pac." + cloud + "/getVpnEndpoints?long=" + r.json()[0]['lon'] + "&lat=" + r.json()[0]['lat'])
+
+    resolved_egress_site = r.json()[0]['display_name']
+
+    vpn_primary_vip = vpn_endpoints.json()['primaryIp']
+    vpn_secondary_vip = vpn_endpoints.json()['secondaryIp']
+
+    results_dc = dict()
+
+    results_dc.update({"resolved_location": resolved_egress_site})
+
+    # now lookup jsonip from ips page to get rest of DC info
+
+    for dc in dc_list:  # dc_list is global dict for ips json page
+
+        dc_cidr = ipaddress.IPv4Network(dc_list[dc]['cidr'])
+
+        # print(dc)
+        if ipaddress.IPv4Address(vpn_primary_vip) in dc_cidr:
+            # hit for primary DC
+
+            # gre_endpoints.append(dc_list[dc]['gre_vip'])
+            # print(dc, dc_list[dc])
+            results_dc.update({"primary_dc": dc_list[dc]})
+
+        if ipaddress.IPv4Address(vpn_secondary_vip) in dc_cidr:
+            # hit for secondary DC
+            # print(dc, dc_list[dc])
+            results_dc.update({"secondary_dc": dc_list[dc]})
+
+            # gre_endpoints.append(dc_list[dc]['gre_vip'])
+
+    return results_dc
