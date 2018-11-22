@@ -3,7 +3,7 @@
 
 **Description**
 
-Use Python? Want to geocode something? Looking to access Zscaler through API?
+Use Python? Looking to access Zscaler through API?
 This library brings the Zscaler API to your Python application.
 
 The following features are currently supported:
