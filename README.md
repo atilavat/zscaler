@@ -19,7 +19,10 @@ The following features are currently supported:
 
 `DC Lookup - get closest 2 Zscaler DCs for a given location and cloud` (pending Zscaler 5.7 release)
 
-`DC Lookup in CSV - get closest 2 Zscaler DCs for hundreds of location provided in CSV format` (pending Zscaler 5.7 release)
+`DC Lookup in CSV - get closest 2 Zscaler DCs for hundreds of locations provided in CSV format` (pending Zscaler 5.7 release)
+
+
+CLI available to test the above features
 
 **Support**
 
