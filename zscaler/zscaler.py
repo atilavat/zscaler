@@ -7,11 +7,9 @@ import ipaddress
 
 dc_list = None  # global variable to hold ips json
 
-
 def _chunk(it, size):
     it = iter(it)
     return iter(lambda: tuple(islice(it, size)), ())
-
 
 class zclient:
     MAX_URLS_LOOKUP_PER_REQUEST = 100
@@ -65,7 +63,7 @@ class zclient:
             'password': self.admin_password,
             'timestamp': self.timestamp
         }
-
+        r = None
         try:
             r = requests.post('http://' + self.base_url + "/authenticatedSession", data=json.dumps(payload),
                               headers=headers)
@@ -92,6 +90,8 @@ class zclient:
 
             payload = array
 
+            r = None
+
             try:
                 r = requests.post('https://' + self.base_url + "/urlLookup", data=json.dumps(payload), headers=headers)
 
@@ -104,26 +104,6 @@ class zclient:
                 url_categories.append(item)
 
         return (url_categories)
-
-    def read_url_csv(self, csvfile):  # expect CSV file as input
-        urls_list = []
-        try:
-            with open(csvfile) as csv_file:
-                csv_reader = csv.reader(csv_file, delimiter=',')
-                line_count = 0
-
-                for row in csv_reader:
-                    if line_count == 0:
-                        pass  # ignore headers
-                    else:
-                        urls_list.append(row[0])
-                    line_count += 1
-        except Exception as e:
-            print(e.args)
-            exit(e.args[0])
-
-        return (urls_list)
-
 
     def get_url_quota(self):
 
@@ -138,6 +118,25 @@ class zclient:
         return r.json()
 
 
+def read_csv(csvfile):  # expect CSV file as input
+    items_list = []
+    try:
+        with open(csvfile) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+
+            for row in csv_reader:
+                if line_count == 0:
+                    pass  # ignore headers
+                else:
+                    items_list.append(row[0])
+                line_count += 1
+    except Exception as e:
+        print("Failed to read CSV file", e.args)
+        exit(e.args[0])
+
+    return (items_list)
+
 def proxy_check():
 
     try:
@@ -149,7 +148,8 @@ def proxy_check():
             return False
 
     except Exception as e:
-        return (e.message, e.args)
+        return (e.args)
+
 
 def access_check(url): #returns true if allowed else false
         try:
@@ -163,7 +163,6 @@ def access_check(url): #returns true if allowed else false
         except Exception as e:
             print (e)
             return False
-
 
 def _get_ips_json(cloud):
     # get list of DCs
@@ -179,11 +178,14 @@ def _get_ips_json(cloud):
                     dc_list.update({location: a})
 
 
-def get_dc(cloud, egress_site):  # return 2 closest dc info as dictionary type
+def dc_lookup(cloud, egress_site):  # return 2 closest dc info as dictionary type
     if dc_list is None:
         _get_ips_json(cloud)
 
-    r = requests.get("https://nominatim.openstreetmap.org/search?q=" + egress_site + "&format=json")
+    # print(egress_site)
+    headers = {"Accept-Language": "en-US,en;q=0.5"}
+    r = requests.get("https://nominatim.openstreetmap.org/search?q=" + egress_site + "&format=json", headers=headers)
+    # print(r.text)
 
     vpn_endpoints = requests.get(
         "https://pac." + cloud + "/getVpnEndpoints?long=" + r.json()[0]['lon'] + "&lat=" + r.json()[0]['lat'])
@@ -218,4 +220,12 @@ def get_dc(cloud, egress_site):  # return 2 closest dc info as dictionary type
 
             # gre_endpoints.append(dc_list[dc]['gre_vip'])
 
-    return results_dc
+    return {egress_site: results_dc}
+
+
+def dc_lookup_csv(cloud, csvfile):
+    dc_lookups = []
+    locations = read_csv(csvfile)
+    for location in locations:
+        dc_lookups.append(dc_lookup(cloud, location))
+    return dc_lookups
