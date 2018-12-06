@@ -41,5 +41,5 @@ Requirements
 
 **Developer Documentation**
 
-View the reference documentation
+View the API reference documentation
 https://help.zscaler.com/zia/api
