@@ -9,16 +9,15 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-
 setup(
 
     name='zscaler',  # Required
 
-    version='0.13',  # Required
+    version='0.14',  # Required
 
-    description='A python wrapper for Zscaler API. This project is not affiliated with Zscaler',  # Optional
+    description='A python wrapper for Zscaler API. This project is not affiliated with Zscaler',
 
-    url='https://github.com/atilavat/Zscaler/',  
+    url='https://github.com/atilavat/Zscaler/',
 
     author='Alok Tilavat', 
     #author_email='pypa-dev@googlegroups.com', 
@@ -28,18 +27,11 @@ setup(
 
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
 
-    install_requires=['requests', 'googlemaps'], 
+    install_requires=['requests'],
 
-    # To provide executable scripts, use entry points in preference to the
-    # "scripts" keyword. Entry points provide cross-platform support and allow
-    # `pip` to create the appropriate form of executable for the target
-    # platform.
-    #
-    # For example, the following would provide a command called `sample` which
-    # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'zscaler = zscaler:main',
+            'zscaler = zscaler.cli:main',
         ],
     },
 
